@@ -16,6 +16,12 @@ import me.yxp.qfun.utils.qq.QQCurrentEnv
 object DefaultBubbleAndFont : BaseSwitchHookItem(), GetMsgRecordListener {
 
     override fun onGet(msgRecord: MsgRecord) {
+        val bubbleManaged = io.github.qqmodulemanager.bridge.BridgeClient.isManaged("default_bubble")
+        val fontManaged = io.github.qqmodulemanager.bridge.BridgeClient.isManaged("default_font")
+        if (bubbleManaged || fontManaged) {
+            applyDefaultMessageStyle(msgRecord, !bubbleManaged, !fontManaged)
+            return
+        }
         if (msgRecord.senderUin != QQCurrentEnv.currentUin.toLong())
             msgRecord.msgAttrs = HashMap<Int, MsgAttributeInfo>()
 

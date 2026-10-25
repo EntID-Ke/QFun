@@ -18,7 +18,10 @@ fun Member.hookBefore(
 ): Unhook {
     return HookEngineManager.engine.hookBefore(this) { param ->
         if (owner?.isEnable == false) return@hookBefore
-        runCatching { block(param) }.onFailure { LogUtils.e("HookBeforeError: ${owner?.name ?: "Unknown"}", it) }
+        runCatching { block(param) }.onFailure {
+            owner?.let { item -> io.github.qqmodulemanager.bridge.BridgeClient.reportFailure(io.github.qqmodulemanager.bridge.BridgeClient.featureForClass(item.javaClass.name), it) }
+            LogUtils.e("HookBeforeError: ${owner?.name ?: "Unknown"}", it)
+        }
     }
 }
 fun Member.hookAfter(
@@ -27,7 +30,10 @@ fun Member.hookAfter(
 ): Unhook {
     return HookEngineManager.engine.hookAfter(this) { param ->
         if (owner?.isEnable == false) return@hookAfter
-        runCatching { block(param) }.onFailure { LogUtils.e("HookAfterError: ${owner?.name ?: "Unknown"}", it) }
+        runCatching { block(param) }.onFailure {
+            owner?.let { item -> io.github.qqmodulemanager.bridge.BridgeClient.reportFailure(io.github.qqmodulemanager.bridge.BridgeClient.featureForClass(item.javaClass.name), it) }
+            LogUtils.e("HookAfterError: ${owner?.name ?: "Unknown"}", it)
+        }
     }
 }
 

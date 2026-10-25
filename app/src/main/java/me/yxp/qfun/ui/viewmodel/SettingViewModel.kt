@@ -128,7 +128,8 @@ class SettingViewModel : ViewModel() {
                         hookItem.tag,
                         hookItem.desc,
                         hookItem.isEnable,
-                        hookItem.isAvailable,
+                        hookItem.isAvailable || io.github.qqmodulemanager.bridge.BridgeClient.isManaged(
+                            io.github.qqmodulemanager.bridge.BridgeClient.featureForClass(hookItem.javaClass.name)),
                         isClickable,
                         if (isClickable) hookItem.name else null
                     )

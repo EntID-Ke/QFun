@@ -110,6 +110,7 @@ extensions.configure<ApplicationExtension> {
     }
 
     buildTypes {
+        getByName("debug") { versionNameSuffix = "-qiii2.2" }
         release {
             isMinifyEnabled = true
             isShrinkResources = true
@@ -162,6 +163,9 @@ extensions.configure<ApplicationExtension> {
 }
 
 dependencies {
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.robolectric:robolectric:4.16.1")
+    testImplementation(projects.qqinterface)
     implementation(libs.androidx.annotation)
     implementation(libs.androidx.core.ktx)
     implementation(libs.kotlinx.coroutines.android)

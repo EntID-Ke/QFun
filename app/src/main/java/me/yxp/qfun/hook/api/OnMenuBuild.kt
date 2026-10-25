@@ -34,39 +34,32 @@ object OnMenuBuild : BaseApiHookItem<MenuClickListener>(), DexKitTask {
     private const val MENU_TYPE = "CopyMenuItem"
 
     override fun loadHook() {
+        if(me.yxp.qfun.utils.qq.HostInfo.isQQ && me.yxp.qfun.utils.qq.HostInfo.versionCode==16580L) {
+            val loader=me.yxp.qfun.utils.reflect.ClassUtils.hostClassLoader
+            val native=QQ9375MenuItems(loader,me.yxp.qfun.loader.hookapi.HookEngineManager.engine)
+            val contribute:(Any)->Unit={menu->
+                val enabled=mutableListOf<MenuClickListener>()
+                forEachChecked{enabled.add(it)}
+                native.append(menu,me.yxp.qfun.utils.qq.HostInfo.hostContext,enabled)
+            }
+            for(name in listOf("QQCustomMenuExpandableLayout","QQCustomMenuNoIconLayout"))
+                loader.loadClass("com.tencent.qqnt.aio.menu.ui.$name").getDeclaredMethod("setMenu",loader.loadClass("com.tencent.qqnt.aio.menu.ui.c"),View::class.java)
+                    .hookBefore(this){param->contribute(param.args[0]!!)}
+            io.github.qqmodulemanager.bridge.BridgeClient.registerMenuContributor{contribute(it)}
+            return
+        }
 
         val itemClass = requireClass(MENU_TYPE)
         val itemSuperClass = itemClass.superclass!!
 
-        QQCustomMenuExpandableLayout::class.java
-            .findMethod {
-                name = "setMenu"
-            }.hookBefore(this) { param ->
-                val customMenu = param.args[0] ?: return@hookBefore
-
-                val items =
-                    customMenu.getObjectByTypeOrNull<MutableList<Any>>(customMenu.javaClass.superclass)
-                if (items.isNullOrEmpty()) return@hookBefore
-                val aioMsgItem = items[0].getObjectByType<AIOMsgItem>(itemSuperClass)
-                val msgRecord = aioMsgItem.msgRecord
-                val msgType = msgRecord.msgType.toString()
-
-
-               forEachChecked { listener ->
-
-                    if (items.any { isModuleItem(it, listener.menuKey) }) return@forEachChecked
-
-                    val args = listener.menuKey.split(",")
-                    if (args.size < 5) return@forEachChecked
-
-                    val targetTypes = args.subList(4, args.size).filter { it.isNotEmpty() }
-                    if (targetTypes.isNotEmpty() && !targetTypes.contains(msgType)) {
-                        return@forEachChecked
-                    }
-
-                    addMenuItem(items, itemClass, listener.menuKey, aioMsgItem)
-                }
-
+        io.github.qqmodulemanager.bridge.BridgeClient.registerMenuContributor { customMenu ->
+            contribute(customMenu, itemClass, itemSuperClass)
+        }
+        QQCustomMenuExpandableLayout::class.java.findMethod { name = "setMenu" }
+            .hookBefore(this) { param ->
+                // Keep QFun's own contribution alive even while the manager/provider is restarting.
+                // The manager runs last and deduplicates these same item instances before sorting.
+                param.args[0]?.let { contribute(it, itemClass, itemSuperClass) }
             }
 
         QQCustomMenuExpandableLayout::class.java.findMethod {
@@ -94,6 +87,21 @@ object OnMenuBuild : BaseApiHookItem<MenuClickListener>(), DexKitTask {
         }
     }
 
+    private fun contribute(customMenu: Any, itemClass: Class<*>, itemSuperClass: Class<*>) {
+        val items = customMenu.getObjectByTypeOrNull<MutableList<Any>>() ?: return
+        if (items.isEmpty()) return
+        val aioMsgItem = items[0].getObjectByType<AIOMsgItem>(itemSuperClass)
+        val msgType = aioMsgItem.msgRecord.msgType.toString()
+        forEachChecked { listener ->
+            if (items.any { isModuleItem(it, listener.menuKey) }) return@forEachChecked
+            val args = listener.menuKey.split(",")
+            if (args.size < 5) return@forEachChecked
+            val targetTypes = args.subList(4, args.size).filter { it.isNotEmpty() }
+            if (targetTypes.isNotEmpty() && !targetTypes.contains(msgType)) return@forEachChecked
+            addMenuItem(items, itemClass, listener.menuKey, aioMsgItem)
+        }
+    }
+
     private fun addMenuItem(
         items: MutableList<Any>,
         itemClass: Class<*>,
@@ -103,6 +111,8 @@ object OnMenuBuild : BaseApiHookItem<MenuClickListener>(), DexKitTask {
         val context = QQCurrentEnv.activity ?: QQCurrentEnv.qQAppInterface.application
         val newItem = itemClass.newInstanceWithArgs(context, aioMsgItem)
         newItem.setObjectByType(key)
+        val parts = key.split(",")
+        io.github.qqmodulemanager.bridge.BridgeClient.tagMenuItem(newItem, "qfun", parts[1] + ":" + parts[2], parts[2])
         items.add(0, newItem)
     }
 

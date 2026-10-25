@@ -26,10 +26,11 @@ object MainHook {
 
 
     fun loadHook() {
-
+        me.yxp.qfun.integration.QQModuleManagerAdapter.register()
         loadApiHook()
         initSwitchHookItem()
         hookAccountChange()
+        io.github.qqmodulemanager.bridge.BridgeClient.ready()
 
 
     }
@@ -37,7 +38,7 @@ object MainHook {
     private fun loadApiHook() = apiHookItemList
         .forEach {
             try {
-                if (it.isInTargetProcess()) it.loadHook()
+                if (it.isInTargetProcess()) { it.loadHook(); it.qqmmReady = true }
             } catch (t: Throwable) {
                 LogUtils.e(it, t)
             }

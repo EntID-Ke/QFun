@@ -32,6 +32,12 @@ object LogUtils {
     }
 
     fun e(hookItem: BaseHookItem, t: Throwable) {
+        io.github.qqmodulemanager.bridge.BridgeClient.reportFailure(
+            io.github.qqmodulemanager.bridge.BridgeClient.featureForClass(hookItem.javaClass.name), t)
+        if (hookItem is me.yxp.qfun.hook.base.BaseApiHookItem<*>) {
+            for (listener in hookItem.listenerSet) io.github.qqmodulemanager.bridge.BridgeClient.reportFailure(
+                io.github.qqmodulemanager.bridge.BridgeClient.featureForClass(listener.javaClass.name), t)
+        }
         e(hookItem.name, t)
     }
 

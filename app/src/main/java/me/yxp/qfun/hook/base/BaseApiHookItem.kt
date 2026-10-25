@@ -4,6 +4,7 @@ import me.yxp.qfun.generated.HookRegistry
 import java.lang.reflect.ParameterizedType
 
 abstract class BaseApiHookItem<T : Listener> : BaseHookItem() {
+    var qqmmReady: Boolean = false
 
 
     @Suppress("UNCHECKED_CAST")
@@ -37,8 +38,11 @@ abstract class BaseApiHookItem<T : Listener> : BaseHookItem() {
 
     protected inline fun forEachChecked(action: (T) -> Unit) {
         for (listener in listenerSet) {
-            if (listener !is BaseSwitchHookItem || listener.isEnable)
-                action(listener)
+            if (listener !is BaseSwitchHookItem || listener.isEnable) {
+                if (listener is BaseSwitchHookItem && io.github.qqmodulemanager.bridge.BridgeClient.featureForClass(listener.javaClass.name).isNotEmpty()) {
+                    try { action(listener) } catch (t: Throwable) { me.yxp.qfun.utils.log.LogUtils.e(listener, t) }
+                } else action(listener)
+            }
         }
     }
 

@@ -36,6 +36,7 @@ object MessageMenuCustom : BaseClickableHookItem<MenuConfig>(MenuConfig.serializ
 
     override fun onHook() {
         setMenu.hookBefore { param ->
+            if (io.github.qqmodulemanager.bridge.BridgeClient.menuManaged()) return@hookBefore
             val keywords = config.hiddenNames
                 .split(',')
                 .map(String::trim)

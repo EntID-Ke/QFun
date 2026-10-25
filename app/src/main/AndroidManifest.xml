@@ -12,6 +12,7 @@
         android:supportsRtl="true"
         android:usesCleartextTraffic="true"
         android:theme="@android:style/Theme.DeviceDefault.Light.NoActionBar.Fullscreen">
+        <meta-data android:name="io.github.qqmodulemanager.bridgeVersion" android:value="2" />
 
         <activity
             android:name=".LauncherActivity"

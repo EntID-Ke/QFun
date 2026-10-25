@@ -20,6 +20,16 @@ object CustomDevice : BaseClickableHookItem<DeviceConfig>(DeviceConfig.serialize
     override val isNeedRestart: Boolean = true
 
     override val defaultConfig: DeviceConfig = DeviceConfig()
+    override fun onInit(): Boolean {
+        if (io.github.qqmodulemanager.bridge.BridgeClient.isManaged("device_model")) {
+            initData()
+            if (config.fakeModel.isBlank()) {
+                io.github.qqmodulemanager.bridge.BridgeClient.configurationRequired("device_model")
+                return false
+            }
+        }
+        return super.onInit()
+    }
 
     override fun onHook() {
         DeviceInfoMonitor::class.java
